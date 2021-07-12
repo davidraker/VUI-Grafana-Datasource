@@ -3,6 +3,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 export interface MyQuery extends DataQuery {
   route?: string;
   http_method?: string;
+  data?: object;
 }
 
 export const defaultQuery: Partial<MyQuery> = {

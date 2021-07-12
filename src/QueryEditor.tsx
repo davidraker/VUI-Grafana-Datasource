@@ -42,7 +42,7 @@ export class QueryEditor extends PureComponent<Props> {
           options={method_options}
           value={http_method}
           width={15}
-          onChange={v => {
+          onChange={(v) => {
             this.onMethodChange(v);
           }}
         />
