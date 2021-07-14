@@ -190,19 +190,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         //return this.process_generic(query, response);
       }
     });
-    //console.log('BEFORE RETVAL');
     console.log('OBSERVABLES IS');
     console.log(observables);
-    //let retval = observables;
-    //let retval = Promise.all(promises).then((data) => ({ data }));
-    //console.log('RETVAL IS: ');
-    //console.log(retval);
-    //return retval;
-    // @ts-ignore
-    //return merge(...observables);
+    //return merge(...observables); // TODO: Figure out how to get __spreadarray to work.
     return observables[0];
-    //return observables;
-    //schedued(observables, schedued).pipe(mergeAll());
   }
 
   async testDatasource() {
