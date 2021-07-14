@@ -29,6 +29,11 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     this.path = instanceSettings.jsonData.path || '';
   }
 
+  route_update_callback(route_options: object): void {
+    console.log('Datasource route_update_callback received route_options but callback has not been set: ')
+    console.log(route_options)
+  }
+
   doRequest(query: MyQuery, request_type: string) {
     console.log('in doRequest, query is: ');
     console.log(query);
@@ -199,15 +204,22 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     }*/
   }
 
+  register_query_routes_callback(route_setter: (route_options: {}) => void){
+    console.log('in register_query_routes_callback.')
+    this.route_update_callback = route_setter
+    console.log('this.route_update_callback is:')
+    console.log(this.route_update_callback)
+  }
+
+
   query(options: DataQueryRequest<MyQuery>): any /*Observable<DataQueryResponse>*/ {
     console.log('IN DATASOURCE: the DataQueryRequest<MyQuery> called options is: ');
     console.log(options);
+    this.route_update_callback({'foo': 'bar'})
     const observables = options.targets.map((target) => {
       const query = defaults(target, defaultQuery);
       console.log('MAX DATA POINTS IS: ' + options.maxDataPoints);
       query.route = query.route + '/?count=' + options.maxDataPoints;
-      //return this.new_process_time_series(query, response);
-      //return this.doRequest(query).then((response) => {
       /*if (query.route?.match(/^\/platforms\/(?<platform>.+)\/agents\/(?<agent>.+)\/rpc\/(?<method>.+)\/?$/)) {
           return this.process_platform_agents_rpc_method(query, response);
         } else*/ if (
