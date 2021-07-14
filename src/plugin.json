@@ -4,6 +4,7 @@
   "name": "VOLTTRON",
   "id": "volttron-volttron",
   "metrics": true,
+  "streaming": true,
   "info": {
     "description": "VOLTTRON UI API Datasource",
     "author": {
@@ -37,6 +38,18 @@
     {
       "path": "volttron",
       "url": "http://localhost:8080"
+    },
+    {
+      "path": "vuiwebsock",
+      "method": "GET",
+      "url": "http://localhost:8080",
+      "headers": [
+        {"name": "Authorization", "content": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJncm91cHMiOlsiYWRtaW4iLCJ2dWkiXSwiaWF0IjoxNjI2MjE4MjA2LCJuYmYiOjE2MjYyMTgyMDYsImV4cCI6MTYyNjIxOTEwNiwiZ3JhbnRfdHlwZSI6ImFjY2Vzc190b2tlbiJ9.lalhbgojtLI20iTScUENwaHcK633-RJlGd1lWukDX_0"},
+        {"name": "Connection", "content": "Upgrade"},
+        {"name": "Upgrade", "content":  "websocket"},
+        {"name": "Sec-WebSocket-Version", "content": "13"},
+        {"name": "Sec-WebSocket-Key", "content": "dGhlIHNhbXBsZSBub25jZQ=="}
+      ]
     }
   ]
 }

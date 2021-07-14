@@ -29,3 +29,6 @@ e2e-results/
 # Editor
 .idea
 
+# Lock Files
+package-lock.json
+yarn.lock
