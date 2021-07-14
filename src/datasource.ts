@@ -90,54 +90,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     }
   }
 
-  // process_time_series(query: MyQuery, response: Observable<DataQueryResponse>): Observable<DataQueryResponse> {
-  //   console.log('IN PROCESS TIME SERIES:');
-  //   //if (query.http_method === 'GET') {
-  //   console.log('Query is a GET');
-  //   let observable = new Observable<DataQueryResponse>((subscriber) => {
-  //     console.log('In Observable subscribe.');
-  //     const frame = new CircularDataFrame({
-  //       append: 'tail',
-  //       capacity: 1000,
-  //     });
-  //     console.log('FRAME CREATED');
-  //     frame.refId = query.refId;
-  //     console.log('FRAME IS:');
-  //     console.log(frame);
-  //     frame.addField({ name: 'Time', type: FieldType.string });
-  //     console.log('TIME FIELD ADDED');
-  //     frame.addField({
-  //       name: 'value',
-  //       type: FieldType.number /*guessFieldTypeFromValue(response.data.values[0][1])*/,
-  //     });
-  //     console.log('VALUE FIELD ADDED');
-  //     response.data.values.forEach(() => {
-  //       console.log('IN FOREACH');
-  //       for (let row in response.data.values.topic) {
-  //         console.log('ADDING ROW:');
-  //         console.log(row);
-  //         frame.add(row);
-  //       }
-  //     });
-  //     console.log('ROWS PACKED');
-  //     subscriber.next({
-  //       data: [frame],
-  //       key: query.refId,
-  //     });
-  //   });
-  //   console.log('OBSERVABLE AT END OF PROCESS_TIME_SERIES IS:');
-  //   console.log(observable);
-  //   return observable;
-  //   /* } else {
-  //     return this.process_generic(query, response);
-  //   }*/
-  // }
-
-  new_process_time_series(
-    query: MyQuery,
-    options: DataQueryRequest,
-    response: Observable<FetchResponse>
-  ): Observable<DataQueryResponse> {
+  process_time_series(query: MyQuery, options: DataQueryRequest, response: Observable<FetchResponse>):
+      Observable<DataQueryResponse> {
     console.log('IN NEW PROCESS TIME SERIES (NPTS):');
     let observable = new Observable<DataQueryResponse>((subscriber) => {
       console.log('In NPTS Observable subscribe.');
@@ -226,10 +180,11 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         query.route?.match(/^\/platforms\/(?<platform>.+)\/historians\/(?<agent>.+)\/topics\/(?<topic>.+)\/?$/)
       ) {
         let response = this.doRequest(query, 'http');
-        return this.new_process_time_series(query, options, response);
+        return this.process_time_series(query, options, response);
       } else if (query.route?.match(/^\/platforms\/(?<platform>.+)\/pubsub\/(?<topic>.+)\/?$/)) {
         let response = this.doRequest(query, 'websocket');
-        return this.new_process_time_series(query, options, response);
+        // TODO: Make separate process methods for different endpoints/return types (e.g., pubsub, historian, route_opt)
+        return this.process_time_series(query, options, response);
       } else {
         return [{}];
         //return this.process_generic(query, response);
