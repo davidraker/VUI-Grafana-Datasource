@@ -5,14 +5,15 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   FieldType,
-  guessFieldTypeFromValue,
+  //guessFieldTypeFromValue,
   MutableDataFrame,
 } from '@grafana/data';
 
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
 
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { Observable /*, merge*/ } from 'rxjs';
+import { Observable } from 'rxjs';
+//import {filter} from 'rxjs/operators';
 import { defaults } from 'lodash';
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
@@ -30,8 +31,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   route_update_callback(route_options: object): void {
-    console.log('Datasource route_update_callback received route_options but callback has not been set: ')
-    console.log(route_options)
+    console.log('Datasource route_update_callback received route_options but callback has not been set: ');
+    console.log(route_options);
   }
 
   doRequest(query: MyQuery, request_type: string) {
@@ -54,44 +55,72 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   // TODO: This just displays the json response from the API in the panel. This is a (generally not useful) placeholder.
-  process_generic(query: MyQuery, response: any): MutableDataFrame {
-    const frame = new MutableDataFrame({
-      refId: query.refId,
-      fields: [{ name: 'Response Value', type: FieldType.string }],
+  process_generic(
+    query: MyQuery,
+    options: DataQueryRequest,
+    response: Observable<FetchResponse>
+  ): Observable<DataQueryResponse> {
+    console.log('IN PROCESS_GENERIC:');
+    response.subscribe(this.route_update_callback);
+    // this.route_update_callback(
+    //     response.pipe(filter((x) => x.data.route_options)).subscribe({
+    //       this.route_update_callback(x)
+    //       // next(x) {
+    //       //   console.log('IN RESPONSE.SUBSCRIBE.NEXT: X is:');
+    //       //   console.log(x);
+    //       //   if (x.data.route_options) {}
+    //       //   return x.data.route_options;
+    //       // },
+    //       error(err) {
+    //         console.log('ERROR FROM Response.subscribe(): ' + err);
+    //       },
+    //     }));
+    return new Observable<DataQueryResponse>((subscriber) => {
+      subscriber.next({
+        data: [new MutableDataFrame()],
+        key: query.refId,
+      });
     });
-    frame.add({ 'Response Value': JSON.stringify(response.data) });
-    return frame;
+    // const frame = new MutableDataFrame({
+    //   refId: query.refId,
+    //   fields: [{ name: 'Response Value', type: FieldType.string }],
+    // });
+    // frame.add({ 'Response Value': JSON.stringify(response.data) });
+    // return frame;
   }
 
-  // TODO: This only handles the (neither common nor guaranteed) case where the RPC POST returns a list of objects.
-  process_platform_agents_rpc_method(query: MyQuery, response: any): MutableDataFrame {
-    if (query.http_method === 'POST') {
-      let fields = [];
-      if (Array.isArray(response.data)) {
-        //const keys = Object.keys(response.data[0]);
-        //const types = Object.values(response.data[0]).map(x => typeof x);
-        for (let k in response.data[0]) {
-          fields.push({ name: k, type: guessFieldTypeFromValue(response.data[0][k]) });
-        }
+  // // TODO: This only handles the (neither common nor guaranteed) case where the RPC POST returns a list of objects.
+  // process_platform_agents_rpc_method(query: MyQuery, response: any): MutableDataFrame {
+  //   if (query.http_method === 'POST') {
+  //     let fields = [];
+  //     if (Array.isArray(response.data)) {
+  //       //const keys = Object.keys(response.data[0]);
+  //       //const types = Object.values(response.data[0]).map(x => typeof x);
+  //       for (let k in response.data[0]) {
+  //         fields.push({ name: k, type: guessFieldTypeFromValue(response.data[0][k]) });
+  //       }
+  //
+  //       const frame = new MutableDataFrame({
+  //         refId: query.refId,
+  //         fields: fields,
+  //       });
+  //       response.data.forEach((row: any) => {
+  //         frame.add(row);
+  //       });
+  //       return frame;
+  //     } else {
+  //       return this.process_generic(query, response);
+  //     }
+  //   } else {
+  //     return this.process_generic(query, response);
+  //   }
+  // }
 
-        const frame = new MutableDataFrame({
-          refId: query.refId,
-          fields: fields,
-        });
-        response.data.forEach((row: any) => {
-          frame.add(row);
-        });
-        return frame;
-      } else {
-        return this.process_generic(query, response);
-      }
-    } else {
-      return this.process_generic(query, response);
-    }
-  }
-
-  process_time_series(query: MyQuery, options: DataQueryRequest, response: Observable<FetchResponse>):
-      Observable<DataQueryResponse> {
+  process_time_series(
+    query: MyQuery,
+    options: DataQueryRequest,
+    response: Observable<FetchResponse>
+  ): Observable<DataQueryResponse> {
     console.log('IN NEW PROCESS TIME SERIES (NPTS):');
     let observable = new Observable<DataQueryResponse>((subscriber) => {
       console.log('In NPTS Observable subscribe.');
@@ -141,14 +170,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           subscriber.complete();
         },
       });
-      // response.data.values.forEach(() => {
-      //   console.log('IN FOREACH');
-      //   for (let row in response.data.values.topic) {
-      //     console.log('ADDING ROW:');
-      //     console.log(row);
-      //     frame.add(row);
-      //   }
-      // });
     });
     console.log('OBSERVABLE AT END OF PROCESS_TIME_SERIES IS:');
     console.log(observable);
@@ -158,20 +179,22 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     }*/
   }
 
-  register_query_routes_callback(route_setter: (route_options: {}) => void){
-    console.log('in register_query_routes_callback.')
-    this.route_update_callback = route_setter
-    console.log('this.route_update_callback is:')
-    console.log(this.route_update_callback)
+  register_query_routes_callback(route_setter: (route_options: any) => void) {
+    console.log('in register_query_routes_callback.');
+    this.route_update_callback = (options_response: any) => {
+        return route_setter(options_response.data.route_options);
+    }
+    console.log('this.route_update_callback is:');
+    console.log(this.route_update_callback);
   }
-
 
   query(options: DataQueryRequest<MyQuery>): any /*Observable<DataQueryResponse>*/ {
     console.log('IN DATASOURCE: the DataQueryRequest<MyQuery> called options is: ');
     console.log(options);
-    this.route_update_callback({'foo': 'bar'})
     const observables = options.targets.map((target) => {
       const query = defaults(target, defaultQuery);
+      console.log('AFTER DEFAULTS, query is:')
+      console.log(query)
       console.log('MAX DATA POINTS IS: ' + options.maxDataPoints);
       query.route = query.route + '/?count=' + options.maxDataPoints;
       /*if (query.route?.match(/^\/platforms\/(?<platform>.+)\/agents\/(?<agent>.+)\/rpc\/(?<method>.+)\/?$/)) {
@@ -186,8 +209,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         // TODO: Make separate process methods for different endpoints/return types (e.g., pubsub, historian, route_opt)
         return this.process_time_series(query, options, response);
       } else {
-        return [{}];
-        //return this.process_generic(query, response);
+        let response = this.doRequest(query, 'http');
+        return this.process_generic(query, options, response);
+        //return [{}];
       }
     });
     console.log('OBSERVABLES IS');
