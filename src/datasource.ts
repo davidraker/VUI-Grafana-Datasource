@@ -32,7 +32,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   route_update_callback(path?: string): (options_response: any) => void {
     console.log('Datasource route_update_callback received something but callback has not been set! ');
-    return () => {}
+    return () => {};
   }
 
   doRequest(query: MyQuery, request_type: string) {
@@ -75,7 +75,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     //         console.log('ERROR FROM Response.subscribe(): ' + err);
     //       },
     //     }));
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       subscriber.next({
         data: [new MutableDataFrame()],
         key: query.refId,
@@ -122,7 +122,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
     console.log('IN NEW PROCESS TIME SERIES (NPTS):');
-    let observable = new Observable<DataQueryResponse>(subscriber => {
+    let observable = new Observable<DataQueryResponse>((subscriber) => {
       console.log('In NPTS Observable subscribe.');
       const frame = new CircularDataFrame({
         append: 'tail',
@@ -186,7 +186,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       return (options_response: any) => {
         const segment_number = path && path.split('/').length >= 2 ? path.split('/').length - 2 : 0;
         route_setter(options_response.data.route_options, segment_number);
-    };
+      };
     };
     console.log('this.route_update_callback is:');
     console.log(this.route_update_callback);
@@ -195,7 +195,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   query(options: DataQueryRequest<MyQuery>): any /*Observable<DataQueryResponse>*/ {
     console.log('IN DATASOURCE: the DataQueryRequest<MyQuery> called options is: ');
     console.log(options);
-    const observables = options.targets.map(target => {
+    const observables = options.targets.map((target) => {
       const query = defaults(target, defaultQuery);
       console.log('AFTER DEFAULTS, query is:');
       console.log(query);

@@ -1,12 +1,13 @@
 import defaults from 'lodash/defaults';
 
-import React, { /*ChangeEvent,*/ PureComponent} from 'react';
-import { /*LegacyForms,*/ Select, Label} from '@grafana/ui';
-import {QueryEditorProps, SelectableValue, DataQueryRequest} from '@grafana/data';
-import {DataSource} from './datasource';
-import {defaultQuery, MyDataSourceOptions, MyQuery} from './types';
-import {cloneDeep} from 'lodash';
+import React, { /*ChangeEvent,*/ PureComponent } from 'react';
+import { /*LegacyForms,*/ Select, Label } from '@grafana/ui';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { DataSource } from './datasource';
+import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
+import { cloneDeep } from 'lodash';
 //import { parse } from '@grafana/data/datetime/datemath';
+
 //const { FormField } = LegacyForms;
 
 type MyState = { route_options: any };
@@ -57,48 +58,48 @@ export class QueryEditor extends PureComponent<Props, MyState> {
 
     }
 
-    onRouteChange = (segment: SelectableValue<string>, index: any) => {
-        index = parseInt(index, 10)
-        console.log('onRouteChange index is:', index)
-        console.log('onRouteChange segment is: ', segment)
-        const {onChange, query, onRunQuery} = this.props;
-        let new_route_opts = cloneDeep(this.state.route_options)
-        if (index < new_route_opts.current_route.length) {
-            console.log('index < new_route_opts.current_route.length')
-            new_route_opts.current_route = new_route_opts.current_route.slice(0, index)
-            new_route_opts.current_route.push(segment.value)
-        } else if (index === new_route_opts.current_route.length) {
-            console.log('index = new_route_opts.current_route.length')
-            new_route_opts.current_route.push(segment.value);
-            console.log('this.sstate.route_options.current_lenth is: ', new_route_opts.current_route)
-        }
-        Object.keys(new_route_opts.segments).forEach((key: string) => {
-            if (parseInt(key, 10) > index && new_route_opts.segments[key]) {
-                console.log('after deletion')
-                delete new_route_opts.segments[key];
-                console.log(new_route_opts.segments)
-            }
-        });
-        console.log('current_route is: ', new_route_opts.current_route)
-        console.log('route will be :', '/' + new_route_opts.current_route.join('/'))
-        onChange({...query, route: '/' + new_route_opts.current_route.join('/')});
-        console.log('after onChange')
-        onRunQuery();
-        console.log('after onRunQuery')
-        this.setState({route_options: new_route_opts})
-        console.log('after setState')
-        console.log('new_route_opts is: ')
-        console.log(new_route_opts)
-        console.log('state.route_options is: ')
-        console.log(this.state.route_options)
-    };
+  onRouteChange = (segment: SelectableValue<string>, index: any) => {
+    index = parseInt(index, 10);
+    console.log('onRouteChange index is:', index);
+    console.log('onRouteChange segment is: ', segment);
+    const { onChange, query, onRunQuery } = this.props;
+    let new_route_opts = cloneDeep(this.state.route_options);
+    if (index < new_route_opts.current_route.length) {
+      console.log('index < new_route_opts.current_route.length');
+      new_route_opts.current_route = new_route_opts.current_route.slice(0, index);
+      new_route_opts.current_route.push(segment.value);
+    } else if (index === new_route_opts.current_route.length) {
+      console.log('index = new_route_opts.current_route.length');
+      new_route_opts.current_route.push(segment.value);
+      console.log('this.sstate.route_options.current_lenth is: ', new_route_opts.current_route);
+    }
+    Object.keys(new_route_opts.segments).forEach((key: string) => {
+      if (parseInt(key, 10) > index && new_route_opts.segments[key]) {
+        console.log('after deletion');
+        delete new_route_opts.segments[key];
+        console.log(new_route_opts.segments);
+      }
+    });
+    console.log('current_route is: ', new_route_opts.current_route);
+    console.log('route will be :', '/' + new_route_opts.current_route.join('/'));
+    onChange({ ...query, route: '/' + new_route_opts.current_route.join('/') });
+    console.log('after onChange');
+    onRunQuery();
+    console.log('after onRunQuery');
+    this.setState({ route_options: new_route_opts });
+    console.log('after setState');
+    console.log('new_route_opts is: ');
+    console.log(new_route_opts);
+    console.log('state.route_options is: ');
+    console.log(this.state.route_options);
+  };
 
-    onMethodChange = (method_value: SelectableValue<string>) => {
-        const {onChange, query, onRunQuery} = this.props;
-        onChange({...query, http_method: method_value.value});
-        // executes the query
-        onRunQuery();
-    };
+  onMethodChange = (method_value: SelectableValue<string>) => {
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({ ...query, http_method: method_value.value });
+    // executes the query
+    onRunQuery();
+  };
 
     update_query_routes = (route_options: any, segment_number: number) => {
         console.log('route options callback is set, and received: ');
@@ -140,20 +141,18 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         // alert("button clicked")
     }
 
-    render() {
-        const query = defaults(this.props.query, defaultQuery);
-        const {http_method} = query;
-        const method_options = [
-            {label: 'GET', value: 'GET'},
-            {label: 'POST', value: 'POST'},
-            {label: 'PUT', value: 'PUT'},
-            {label: 'DELETE', value: 'DELETE'},
-        ];
+  render() {
+    const query = defaults(this.props.query, defaultQuery);
+    const { http_method } = query;
+    const method_options = [
+      { label: 'GET', value: 'GET' },
+      { label: 'POST', value: 'POST' },
+      { label: 'PUT', value: 'PUT' },
+      { label: 'DELETE', value: 'DELETE' },
+    ];
 
         return (
             // TODO: Label does not appear in the same style as that of the FormField.
-            <div>
-
             <div className="gf-form">
                 <Label>HTTP Method</Label>
                 <Select
