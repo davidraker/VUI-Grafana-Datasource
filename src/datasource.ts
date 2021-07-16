@@ -30,9 +30,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     this.path = instanceSettings.jsonData.path || '';
   }
 
-  route_update_callback(route_options: object): void {
-    console.log('Datasource route_update_callback received route_options but callback has not been set: ');
-    console.log(route_options);
+  route_update_callback(path?: string): (options_response: any) => void {
+    console.log('Datasource route_update_callback received something but callback has not been set! ');
+    return () => {}
   }
 
   doRequest(query: MyQuery, request_type: string) {
@@ -61,7 +61,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
     console.log('IN PROCESS_GENERIC:');
-    response.subscribe(this.route_update_callback);
+    response.subscribe(this.route_update_callback(query.route));
     // this.route_update_callback(
     //     response.pipe(filter((x) => x.data.route_options)).subscribe({
     //       this.route_update_callback(x)
@@ -75,7 +75,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     //         console.log('ERROR FROM Response.subscribe(): ' + err);
     //       },
     //     }));
-    return new Observable<DataQueryResponse>((subscriber) => {
+    return new Observable<DataQueryResponse>(subscriber => {
       subscriber.next({
         data: [new MutableDataFrame()],
         key: query.refId,
@@ -122,7 +122,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
     console.log('IN NEW PROCESS TIME SERIES (NPTS):');
-    let observable = new Observable<DataQueryResponse>((subscriber) => {
+    let observable = new Observable<DataQueryResponse>(subscriber => {
       console.log('In NPTS Observable subscribe.');
       const frame = new CircularDataFrame({
         append: 'tail',
@@ -179,11 +179,15 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     }*/
   }
 
-  register_query_routes_callback(route_setter: (route_options: any) => void) {
+  register_query_routes_callback(route_setter: (route_options: any, segment_number: number) => void) {
     console.log('in register_query_routes_callback.');
-    this.route_update_callback = (options_response: any) => {
-        return route_setter(options_response.data.route_options);
-    }
+    // name = () => {}
+    this.route_update_callback = (path?: string) => {
+      return (options_response: any) => {
+        const segment_number = path && path.split('/').length >= 2 ? path.split('/').length - 2 : 0;
+        route_setter(options_response.data.route_options, segment_number);
+    };
+    };
     console.log('this.route_update_callback is:');
     console.log(this.route_update_callback);
   }
@@ -191,10 +195,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   query(options: DataQueryRequest<MyQuery>): any /*Observable<DataQueryResponse>*/ {
     console.log('IN DATASOURCE: the DataQueryRequest<MyQuery> called options is: ');
     console.log(options);
-    const observables = options.targets.map((target) => {
+    const observables = options.targets.map(target => {
       const query = defaults(target, defaultQuery);
-      console.log('AFTER DEFAULTS, query is:')
-      console.log(query)
+      console.log('AFTER DEFAULTS, query is:');
+      console.log(query);
       console.log('MAX DATA POINTS IS: ' + options.maxDataPoints);
       query.route = query.route + '/?count=' + options.maxDataPoints;
       /*if (query.route?.match(/^\/platforms\/(?<platform>.+)\/agents\/(?<agent>.+)\/rpc\/(?<method>.+)\/?$/)) {

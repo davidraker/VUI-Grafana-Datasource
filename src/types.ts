@@ -4,6 +4,7 @@ export interface MyQuery extends DataQuery {
   route?: string;
   http_method?: string;
   data?: object;
+  query_params?: string;
 }
 
 export const defaultQuery: Partial<MyQuery> = {
