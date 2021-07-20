@@ -42,9 +42,9 @@
     {
       "path": "vuiwebsock",
       "method": "GET",
-      "url": "http://localhost:8080",
+      "url": "ws://localhost:8080",
       "headers": [
-        {"name": "Authorization", "content": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJncm91cHMiOlsiYWRtaW4iLCJ2dWkiXSwiaWF0IjoxNjI2MjE4MjA2LCJuYmYiOjE2MjYyMTgyMDYsImV4cCI6MTYyNjIxOTEwNiwiZ3JhbnRfdHlwZSI6ImFjY2Vzc190b2tlbiJ9.lalhbgojtLI20iTScUENwaHcK633-RJlGd1lWukDX_0"},
+        {"name": "Authorization", "content": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJncm91cHMiOlsiYWRtaW4iLCJ2dWkiXSwiaWF0IjoxNjI2NzE3NDA3LCJuYmYiOjE2MjY3MTc0MDcsImV4cCI6MTYyNjcxODMwNywiZ3JhbnRfdHlwZSI6ImFjY2Vzc190b2tlbiJ9.NibX4NnH3ATLpeELFKa79At7npX_1uOweUzWknMsKoo"},
         {"name": "Connection", "content": "Upgrade"},
         {"name": "Upgrade", "content":  "websocket"},
         {"name": "Sec-WebSocket-Version", "content": "13"},
