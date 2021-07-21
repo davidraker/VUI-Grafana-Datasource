@@ -21,14 +21,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   path: string;
 
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
-    console.log('before super, instanceSettings.url is: ' + instanceSettings.url);
     super(instanceSettings);
-
-    console.log('instanceSettings.url is: ' + instanceSettings.url);
     this.url = instanceSettings.url;
-    console.log('instanceSettings.jsonData is:')
-    console.log(instanceSettings.jsonData)
-    console.log('In constructor this.url is: ' + this.url);
     this.path = instanceSettings.jsonData.path || '';
   }
 
@@ -87,7 +81,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       options: DataQueryRequest,
       response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
-    console.log('IN PROCESS_HISTORIAN_TS')
+    console.log('IN PROCESS_GENERIC')
     return new Observable<DataQueryResponse>(subscriber => {
       const frame = new MutableDataFrame({
         refId: query.refId,
@@ -306,15 +300,13 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   register_query_routes_callback(route_setter: (route_options: any, segment_number: number) => void) {
     this.route_update_callback = (path?: string) => {
       return (options_response: any) => {
-        const segment_number = path && path.split('/').length >= 2 ? path.split('/').length - 2 : 0;
+        const segment_number = path && path.split('/').length >= 1 ? path.split('/').length - 1 : 0;
         route_setter(options_response.data.route_options, segment_number);
       };
     };
   }
 
   query(options: DataQueryRequest<MyQuery>): any /*Observable<DataQueryResponse>*/ {
-    console.log('IN DATASOURCE: the DataQueryRequest<MyQuery> called options is: ');
-    console.log(options);
     const observables = options.targets.map(target => {
       //let return_list: Observable<DataQueryResponse>[] = [];
       const query = defaults(target, defaultQuery);
@@ -323,26 +315,30 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         query.route = query.route + '/devices/Campus/Building1/Fake1/all'
       }
       if (query.route?.match(/^\/platforms\/.+\/pubsub\/.+\/?$/)) {
-        console.log("IN PUBSUB BLOCK OF QUERY")
         const response = this.doRequest(query, 'websocket');
-        console.log('response is: ')
-        console.log(response)
-        this.alert_on_error(response);
-        this.log_all_nexts(response);
+        // this.alert_on_error(response);
+        // this.log_all_nexts(response);
         return this.process_pubsub_ts(query, options, response);
       } else {
-        query.route = query.route + '/' + '?count=' + options.maxDataPoints;
-        const response = this.doRequest(query, 'http');
-        this.alert_on_error(response);
-        this.log_all_nexts(response);
-        const routes_observable = this.process_route_options(query, options, response);
+        // this.alert_on_error(response);
+        // this.log_all_nexts(response);
         if (query.route?.match(/^\/platforms\/.+\/historians\/.+\/topics\/.+\/?$/)) {
+          query.route = query.route + '?start=' + options.range.from?.format();
+          query.route = query.route + '&end=' + options.range.to?.format();
+          query.route = query.route + '&count=' + options.maxDataPoints;
+          query.route = query.route + '&order=' + 'FIRST_TO_LAST';
+          const response = this.doRequest(query, 'http');
+          const routes_observable = this.process_route_options(query, options, response);
           return routes_observable.pipe(merge(this.process_historian_ts(query, options, response)))
         } else if (query.route?.match(/^\/platforms\/.+\/devices\/.+\/?$/)){
+          const response = this.doRequest(query, 'http');
+          const routes_observable = this.process_route_options(query, options, response);
           return routes_observable.pipe(merge(this.process_device_ts(query, options, response)))
           /*} else if (query.route?.match(/^\/platforms\/.+)\/agents\/.+)\/rpc\/.+)\/?$/)) {
                       return this.process_platform_agents_rpc_method(query, response);*/
         } else {
+          const response = this.doRequest(query, 'http');
+          const routes_observable = this.process_route_options(query, options, response);
           return routes_observable.pipe(merge(this.process_generic(query, options, response)));
         }
       }
