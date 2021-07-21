@@ -7,17 +7,30 @@ import {DataSource} from './datasource';
 import {defaultQuery, MyDataSourceOptions, MyQuery} from './types';
 import {cloneDeep} from 'lodash';
 //import { parse } from '@grafana/data/datetime/datemath';
-
 //const { FormField } = LegacyForms;
 
-type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
-
 type MyState = { route_options: any };
+
+// @ts-ignore
+type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions, MyState>;
+
+// type MyState = { route_options: any };
 
 export class QueryEditor extends PureComponent<Props, MyState> {
     constructor(props: Props) {
         super(props);
         this.props.datasource.register_query_routes_callback(this.update_query_routes);
+        console.log('this.props.query')
+        // console.log(this.props.query.)
+        let segments = this.props.query.route?.split('/')
+
+        // @ts-ignore
+        if (segments[0]===''){
+           // @ts-ignore
+            segments.shift()
+        }
+        console.log(segments)
+
         this.props.onRunQuery();
         this.state = {
             route_options: {
@@ -28,6 +41,24 @@ export class QueryEditor extends PureComponent<Props, MyState> {
                 },
             },
         };
+        let uri_segment = 'http://127.0.0.1:8080/vui';
+        this.state.route_options.current_route = segments
+        // this.state.route_options.segments.'0' = segments
+
+        segments.forEach((seg: any, indx: any) => {
+            uri_segment = uri_segment + '/' + seg
+            // fetch(uri_segment, {mode: 'cors'}).then(response => response.json()).then(result => {
+            //     this.state.route_options.segments[indx] = Object.keys(result['route_options'])
+            // })
+            const response = this.props.datasource.doRequest(uri_segment, 'http');
+            console.log('RESPONSE')
+            console.log(response)
+            // const routes_observable = this.props.datasource.process_route_options(uri_segment, options, response);
+
+
+        });
+        // [0] = segments;
+
     }
 
     onRouteChange = (segment: SelectableValue<string>, index: any) => {
@@ -95,6 +126,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     generateSelectBox = () => {
         return Object.keys(this.state.route_options.segments).map((index: string) => {
             const route_options = this.state.route_options.segments[index];
+            // this.state.route_options.current_route
             console.log('index')
             console.log(index)
             console.log('route_options from generate box')
@@ -112,6 +144,14 @@ export class QueryEditor extends PureComponent<Props, MyState> {
                 />
             );
         });
+    }
+    handleClick = (refs: any) => {
+        alert("button clicked")
+        // alert(this.refs.myInput.value);
+            // const {onChange, query, onRunQuery} = this.props;
+            // onChange({...query, http_method: method_value.value});
+            // // executes the query
+            // onRunQuery();
     }
 
     render() {
@@ -138,6 +178,17 @@ export class QueryEditor extends PureComponent<Props, MyState> {
                 />
 
                 {this.generateSelectBox()}
+                { this.state.route_options.current_route.includes('topics')?
+                    <div>
+                        <input type="text" ref="myInput" />
+                         <input
+                          type="button"
+                          value="Enter Topic segments"
+                          height={48}
+                          onClick={this.handleClick}
+                         />
+                    </div>: ''
+                }
             </div>
         );
     }
