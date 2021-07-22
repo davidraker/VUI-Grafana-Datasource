@@ -2,7 +2,7 @@ import defaults from 'lodash/defaults';
 
 import React, { /*ChangeEvent,*/ PureComponent} from 'react';
 import { /*LegacyForms,*/ Select, Label} from '@grafana/ui';
-import {QueryEditorProps, SelectableValue} from '@grafana/data';
+import {QueryEditorProps, SelectableValue, DataQueryRequest} from '@grafana/data';
 import {DataSource} from './datasource';
 import {defaultQuery, MyDataSourceOptions, MyQuery} from './types';
 import {cloneDeep} from 'lodash';
@@ -41,21 +41,32 @@ export class QueryEditor extends PureComponent<Props, MyState> {
                 },
             },
         };
-        let uri_segment = 'http://127.0.0.1:8080/vui';
+        let uri_segment = '';
         this.state.route_options.current_route = segments
         // this.state.route_options.segments.'0' = segments
+        let datasrc = this.props.datasource;
 
         segments.forEach((seg: any, indx: any) => {
-            uri_segment = uri_segment + '/' + seg
             // fetch(uri_segment, {mode: 'cors'}).then(response => response.json()).then(result => {
             //     this.state.route_options.segments[indx] = Object.keys(result['route_options'])
             // })
-            const response = this.props.datasource.doRequest(uri_segment, 'http');
+            // /platform/suba/
+            // const response = this.props.datasource.doRequest(seg, 'http');
+
+            let q = {
+              refId: this.props.datasource.id.toString(),
+              http_method: 'GET',
+              route: uri_segment,
+            } as MyQuery;
+            //
+            let request = {} as DataQueryRequest;
+            request.targets = [q];
+            let response = datasrc.query(request);
+            uri_segment = uri_segment + '/' + seg
             console.log('RESPONSE')
             console.log(response)
+            // let response = this.props.datasource.query('suba');
             // const routes_observable = this.props.datasource.process_route_options(uri_segment, options, response);
-
-
         });
         // [0] = segments;
 
@@ -179,7 +190,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
 
                 {this.generateSelectBox()}
                 { this.state.route_options.current_route.includes('topics')?
-                    <div>
+                    <div style={{whiteSpace: 'pre-wrap'}}>
                         <input type="text" ref="myInput" />
                          <input
                           type="button"
