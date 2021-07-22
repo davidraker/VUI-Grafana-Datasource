@@ -152,6 +152,8 @@ export class QueryEditor extends PureComponent<Props, MyState> {
 
         return (
             // TODO: Label does not appear in the same style as that of the FormField.
+            <div>
+
             <div className="gf-form">
                 <Label>HTTP Method</Label>
                 <Select
@@ -164,7 +166,9 @@ export class QueryEditor extends PureComponent<Props, MyState> {
                 />
 
                 {this.generateSelectBox()}
-                { this.state.route_options.current_route.includes('topics')?
+
+            </div>
+                     { this.state.route_options.current_route.includes('devices')?
                     <div style={{whiteSpace: 'pre-wrap'}}>
                         <input type="text" ref="myInput" />
                          <input
@@ -173,6 +177,8 @@ export class QueryEditor extends PureComponent<Props, MyState> {
                           height={48}
                           onClick={this.handleClick}
                          />
+                        <input type="checkbox" ref="myInput" />
+                        <label>read-all</label>
                     </div>: ''
                 }
             </div>
