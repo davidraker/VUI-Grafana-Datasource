@@ -9,12 +9,12 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 
-import {defaultQuery, MyDataSourceOptions, MyQuery} from './types';
+import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
 
-import {FetchResponse, getBackendSrv} from '@grafana/runtime';
-import {Observable} from 'rxjs';
-import {filter, merge} from 'rxjs/operators';
-import {defaults, isEmpty} from 'lodash';
+import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { Observable } from 'rxjs';
+import { filter, merge } from 'rxjs/operators';
+import { defaults, isEmpty } from 'lodash';
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   url?: string;
@@ -33,11 +33,11 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   log_and_return(x: string, return_empty: boolean): string {
     console.log(x);
-    return return_empty ? '' : x ;
+    return return_empty ? '' : x;
   }
 
   doRequest(query: MyQuery, request_type: string) {
-    console.log('IN DO_REQUEST')
+    console.log('IN DO_REQUEST');
     const routePath = request_type === 'websocket' ? '/vuiwebsock' : '/volttron';
     let url = this.url + routePath + '/vui' + query.route;
     // if (routePath === '/vuiwebsock') {
@@ -54,77 +54,81 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   alert_on_error(response: Observable<FetchResponse>) {
-    response.pipe(filter(x => !isEmpty(x.data.error))).subscribe({
+    response.pipe(filter((x) => !isEmpty(x.data.error))).subscribe({
       next(x: any) {
-        console.log('VUI ERROR: ', x.data.error)
+        console.log('VUI ERROR: ', x.data.error);
         alert(x.data.error);
       },
       error(x) {
         console.log('VUI ERROR: ', x.data.error);
-        alert(x.data.error)
+        alert(x.data.error);
       },
       complete() {},
     });
   }
 
   process_route_options(
-      query: MyQuery,
-      options: DataQueryRequest,
-      response: Observable<FetchResponse>
+    query: MyQuery,
+    options: DataQueryRequest,
+    response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
-    response.pipe(filter(x => !isEmpty(x.data.route_options))).subscribe(this.route_update_callback(query.route));
+    response.pipe(filter((x) => !isEmpty(x.data.route_options))).subscribe(this.route_update_callback(query.route));
     return this._empty_data_frame_observable(query);
   }
 
   process_generic(
-      query: MyQuery,
-      options: DataQueryRequest,
-      response: Observable<FetchResponse>
+    query: MyQuery,
+    options: DataQueryRequest,
+    response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
-    console.log('IN PROCESS_GENERIC')
-    return new Observable<DataQueryResponse>(subscriber => {
+    console.log('IN PROCESS_GENERIC');
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new MutableDataFrame({
         refId: query.refId,
-        fields: [{name: 'Response Value', type: FieldType.string}],
+        fields: [{ name: 'Response Value', type: FieldType.string }],
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
-          frame.add({'Response Value': JSON.stringify(x.data)});
+          frame.add({ 'Response Value': JSON.stringify(x.data) });
           subscriber.next({
             data: [frame],
             key: query.refId,
           });
-        }
+        },
       });
     });
   }
 
-  // // TODO: This only handles the (neither common nor guaranteed) case where the RPC POST returns a list of objects.
-  // process_platform_agents_rpc_method(query: MyQuery, response: any): MutableDataFrame {
-  //   if (query.http_method === 'POST') {
-  //     let fields = [];
-  //     if (Array.isArray(response.data)) {
-  //       //const keys = Object.keys(response.data[0]);
-  //       //const types = Object.values(response.data[0]).map(x => typeof x);
-  //       for (let k in response.data[0]) {
-  //         fields.push({ name: k, type: guessFieldTypeFromValue(response.data[0][k]) });
-  //       }
-  //
-  //       const frame = new MutableDataFrame({
-  //         refId: query.refId,
-  //         fields: fields,
-  //       });
-  //       response.data.forEach((row: any) => {
-  //         frame.add(row);
-  //       });
-  //       return frame;
-  //     } else {
-  //       return this.process_generic(query, response);
-  //     }
-  //   } else {
-  //     return this.process_generic(query, response);
-  //   }
-  // }
+  // TODO: This only handles the (neither common nor guaranteed) case where the RPC POST returns a list of objects.
+  process_platform_agents_rpc_method(
+    query: MyQuery,
+    options: DataQueryRequest,
+    response: Observable<FetchResponse>
+  ): Observable<DataQueryResponse> {
+    // if (query.http_method === 'POST') {
+    //   let fields = [];
+    //   if (Array.isArray(response.data)) {
+    //     //const keys = Object.keys(response.data[0]);
+    //     //const types = Object.values(response.data[0]).map(x => typeof x);
+    //     for (let k in response.data[0]) {
+    //       fields.push({ name: k, type: guessFieldTypeFromValue(response.data[0][k]) });
+    //     }
+    //
+    //     const frame = new MutableDataFrame({
+    //       refId: query.refId,
+    //       fields: fields,
+    //     });
+    //     response.data.forEach((row: any) => {
+    //       frame.add(row);
+    //     });
+    //     return frame;
+    //   } else {
+    return this.process_generic(query, options, response);
+    //   }
+    // } else {
+    //   return this.process_generic(query, options, response);
+    // }
+  }
 
   log_all_nexts(response: Observable<FetchResponse>) {
     response.subscribe({
@@ -134,7 +138,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       },
       error(err: any) {
         console.log('LOG_ALL_NEXTS ERROR: ');
-        console.log(err.data.error)
+        console.log(err.data.error);
       },
       complete() {
         console.log('LOG_ALL_NEXTS COMPLETE');
@@ -147,15 +151,15 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     options: DataQueryRequest,
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
-    console.log('IN PROCESS_HISTORIAN_TS')
-    return new Observable<DataQueryResponse>(subscriber => {
+    console.log('IN PROCESS_HISTORIAN_TS');
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new CircularDataFrame({
         append: 'tail',
         capacity: options.maxDataPoints,
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
-          const entries:any = Object.entries(x.data)
+          const entries: any = Object.entries(x.data);
           if (frame.fields.length === 0) {
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
@@ -193,21 +197,21 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   process_device_ts(
-      query: MyQuery,
-      options: DataQueryRequest,
-      response: Observable<FetchResponse>
+    query: MyQuery,
+    options: DataQueryRequest,
+    response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
-    console.log('IN PROCESS_DEVICE_TS')
-    return new Observable<DataQueryResponse>(subscriber => {
+    console.log('IN PROCESS_DEVICE_TS');
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new CircularDataFrame({
         append: 'tail',
         capacity: 1,
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
-          const entries:any = Object.entries(x.data)
-          console.log('entries is: ')
-          console.log(entries)
+          const entries: any = Object.entries(x.data);
+          console.log('entries is: ');
+          console.log(entries);
           if (frame.fields.length === 0) {
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
@@ -221,16 +225,16 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           for (const topic in x.data) {
             if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
               const field_name = topic.split('/').slice(-1).pop() || '';
-                frame.add({
-                  Time: Date.now(),
-                  [field_name]: x.data[topic]['value'],
-                });
-                console.log('frame is: ')
-                console.log(frame)
-                subscriber.next({
-                  data: [frame],
-                  key: query.refId,
-                });
+              frame.add({
+                Time: Date.now(),
+                [field_name]: x.data[topic]['value'],
+              });
+              console.log('frame is: ');
+              console.log(frame);
+              subscriber.next({
+                data: [frame],
+                key: query.refId,
+              });
             }
           }
         },
@@ -245,25 +249,25 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   process_pubsub_ts(
-      query: MyQuery,
-      options: DataQueryRequest,
-      response: Observable<FetchResponse>
+    query: MyQuery,
+    options: DataQueryRequest,
+    response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
-    console.log('IN PROCESS_PUBSUB_TS')
-    return new Observable<DataQueryResponse>(subscriber => {
-      console.log('IN RETURN NEW OBSERVABLE')
+    console.log('IN PROCESS_PUBSUB_TS');
+    return new Observable<DataQueryResponse>((subscriber) => {
+      console.log('IN RETURN NEW OBSERVABLE');
       const frame = new CircularDataFrame({
         append: 'tail',
         capacity: 10,
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
           console.log('In process_pubsub_ts, next(x) is: ');
           console.log(x);
           if (frame.fields.length === 0) {
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
-            frame.addField({name: 'Value', type: FieldType.string})  // TODO: Fix this.
+            frame.addField({ name: 'Value', type: FieldType.string }); // TODO: Fix this.
             // const field_name = entries[0][0].split('/').slice(-1).pop() || '';
             // const first_value = entries[0][1].value;
             // frame.addField({
@@ -278,8 +282,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
                 Time: Date.now(),
                 [field_name]: x.data[topic]['value'],
               });
-              console.log('frame is: ')
-              console.log(frame)
+              console.log('frame is: ');
+              console.log(frame);
               subscriber.next({
                 data: [frame],
                 key: query.refId,
@@ -307,54 +311,61 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   query(options: DataQueryRequest<MyQuery>): any /*Observable<DataQueryResponse>*/ {
-    const observables = options.targets.map(target => {
+    const observables = options.targets.map((target) => {
       //let return_list: Observable<DataQueryResponse>[] = [];
       const query = defaults(target, defaultQuery);
 
-      if(query.route?.match(/^\/platforms\/.+\/pubsub\/?$/)) {
-        query.route = query.route + '/devices/Campus/Building1/Fake1/all'
-      }
-      if (query.route?.match(/^\/platforms\/.+\/pubsub\/.+\/?$/)) {
-        const response = this.doRequest(query, 'websocket');
-        // this.alert_on_error(response);
-        // this.log_all_nexts(response);
-        return this.process_pubsub_ts(query, options, response);
-      } else {
-        // this.alert_on_error(response);
-        // this.log_all_nexts(response);
-        if (query.route?.match(/^\/platforms\/.+\/historians\/.+\/topics\/.+\/?$/)) {
-          query.route = query.route + '?start=' + options.range.from?.format();
-          query.route = query.route + '&end=' + options.range.to?.format();
-          query.route = query.route + '&count=' + options.maxDataPoints;
-          query.route = query.route + '&order=' + 'FIRST_TO_LAST';
-          const response = this.doRequest(query, 'http');
-          const routes_observable = this.process_route_options(query, options, response);
-          return routes_observable.pipe(merge(this.process_historian_ts(query, options, response)))
-        } else if (query.route?.match(/^\/platforms\/.+\/devices\/.+\/?$/)){
-          const response = this.doRequest(query, 'http');
-          const routes_observable = this.process_route_options(query, options, response);
-          return routes_observable.pipe(merge(this.process_device_ts(query, options, response)))
-          /*} else if (query.route?.match(/^\/platforms\/.+)\/agents\/.+)\/rpc\/.+)\/?$/)) {
-                      return this.process_platform_agents_rpc_method(query, response);*/
-        } else {
-          const response = this.doRequest(query, 'http');
-          const routes_observable = this.process_route_options(query, options, response);
-          return routes_observable.pipe(merge(this.process_generic(query, options, response)));
+      if (query.http_method === 'GET') {
+        if (query.route?.match(/^\/platforms\/.+\/pubsub\/?$/)) {
+          query.route = query.route + '/devices/Campus/Building1/Fake1/all';
         }
+        if (query.route?.match(/^\/platforms\/.+\/pubsub\/.+\/?$/)) {
+          const response = this.doRequest(query, 'websocket');
+          // this.alert_on_error(response);
+          // this.log_all_nexts(response);
+          return this.process_pubsub_ts(query, options, response);
+        } else {
+          // this.alert_on_error(response);
+          // this.log_all_nexts(response);
+          if (query.route?.match(/^\/platforms\/.+\/historians\/.+\/topics\/.+\/?$/)) {
+            query.route = query.route + '?start=' + options.range.from?.format();
+            query.route = query.route + '&end=' + options.range.to?.format();
+            query.route = query.route + '&count=' + options.maxDataPoints;
+            query.route = query.route + '&order=' + 'FIRST_TO_LAST';
+            const response = this.doRequest(query, 'http');
+            const routes_observable = this.process_route_options(query, options, response);
+            return routes_observable.pipe(merge(this.process_historian_ts(query, options, response)));
+          } else if (query.route?.match(/^\/platforms\/.+\/devices\/.+\/?$/)) {
+            const response = this.doRequest(query, 'http');
+            const routes_observable = this.process_route_options(query, options, response);
+            return routes_observable.pipe(merge(this.process_device_ts(query, options, response)));
+          } else if (query.route?.match(/^\/platforms\/.+\/agents\/.+\/rpc\/.+\/?$/)) {
+            const response = this.doRequest(query, 'http');
+            const routes_observable = this.process_route_options(query, options, response);
+            return routes_observable.pipe(merge(this.process_platform_agents_rpc_method(query, options, response)));
+          } else {
+            const response = this.doRequest(query, 'http');
+            const routes_observable = this.process_route_options(query, options, response);
+            return routes_observable.pipe(merge(this.process_generic(query, options, response)));
+          }
+        }
+      } else {
+        const response = this.doRequest(query, 'http');
+        return this.process_generic(query, options, response);
       }
     });
-    console.log('observables is:')
-    console.log(observables)
+    console.log('observables is:');
+    console.log(observables);
     return observables[0];
   }
 
   _empty_data_frame_observable(query: MyQuery) {
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new MutableDataFrame({
         refId: query.refId,
-        fields: [{name: ' ', type: FieldType.other}]
+        fields: [{ name: ' ', type: FieldType.other }],
       });
-      frame.add({' ': 'No data'})
+      frame.add({ ' ': 'No data' });
       subscriber.next({
         data: [frame],
         key: query.refId,
