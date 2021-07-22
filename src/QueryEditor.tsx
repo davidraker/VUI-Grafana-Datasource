@@ -20,8 +20,6 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     constructor(props: Props) {
         super(props);
         this.props.datasource.register_query_routes_callback(this.update_query_routes);
-        console.log('this.props.query')
-        // console.log(this.props.query.)
         let segments = this.props.query.route?.split('/')
 
         // @ts-ignore
@@ -29,8 +27,6 @@ export class QueryEditor extends PureComponent<Props, MyState> {
            // @ts-ignore
             segments.shift()
         }
-        console.log(segments)
-
         this.props.onRunQuery();
         this.state = {
             route_options: {
@@ -43,32 +39,21 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         };
         let uri_segment = '';
         this.state.route_options.current_route = segments
-        // this.state.route_options.segments.'0' = segments
         let datasrc = this.props.datasource;
 
         segments.forEach((seg: any, indx: any) => {
-            // fetch(uri_segment, {mode: 'cors'}).then(response => response.json()).then(result => {
-            //     this.state.route_options.segments[indx] = Object.keys(result['route_options'])
-            // })
-            // /platform/suba/
-            // const response = this.props.datasource.doRequest(seg, 'http');
-
             let q = {
               refId: this.props.datasource.id.toString(),
               http_method: 'GET',
               route: uri_segment,
             } as MyQuery;
-            //
             let request = {} as DataQueryRequest;
             request.targets = [q];
             let response = datasrc.query(request);
             uri_segment = uri_segment + '/' + seg
             console.log('RESPONSE')
             console.log(response)
-            // let response = this.props.datasource.query('suba');
-            // const routes_observable = this.props.datasource.process_route_options(uri_segment, options, response);
         });
-        // [0] = segments;
 
     }
 
@@ -124,14 +109,9 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         console.log('new_key from callback', segment_number /*new_key, this.state.route_options.current_route.length*/)
         //if (this.state.route_options.current_route.length == segment_number /*parseInt(new_key)*/){
         this.state.route_options.segments[segment_number /*new_key*/] = Object.keys(route_options);
-
-        //}
-        //console.log(Object.keys(route_options))
-        //console.log('after')
         console.log('this.state.route_options.segments:', this.state.route_options.segments)
         console.log('this.state.route_options.current_route', this.state.route_options.current_route)
         this.forceUpdate();
-        //this.setState({route_options.segments[new_key]: Object(route_options).keys()});
     };
 
     generateSelectBox = () => {
@@ -158,11 +138,6 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     }
     handleClick = (refs: any) => {
         alert("button clicked")
-        // alert(this.refs.myInput.value);
-            // const {onChange, query, onRunQuery} = this.props;
-            // onChange({...query, http_method: method_value.value});
-            // // executes the query
-            // onRunQuery();
     }
 
     render() {
