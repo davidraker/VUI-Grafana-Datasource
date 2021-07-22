@@ -137,7 +137,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         });
     }
     handleClick = (refs: any) => {
-        alert("button clicked")
+        // alert("button clicked")
     }
 
     render() {
