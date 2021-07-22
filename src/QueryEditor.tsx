@@ -2,7 +2,7 @@ import defaults from 'lodash/defaults';
 
 import React, { /*ChangeEvent,*/ PureComponent } from 'react';
 import { /*LegacyForms,*/ Select, Label } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, DataQueryRequest } from '@grafana/data';
 import { DataSource } from './datasource';
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
 import { cloneDeep } from 'lodash';
@@ -151,36 +151,36 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       { label: 'DELETE', value: 'DELETE' },
     ];
 
-        return (
-            // TODO: Label does not appear in the same style as that of the FormField.
-            <div className="gf-form">
-                <Label>HTTP Method</Label>
-                <Select
-                    options={method_options}
-                    value={http_method}
-                    width={15}
-                    onChange={v => {
-                        this.onMethodChange(v);
-                    }}
-                />
+    return (
+        // TODO: Label does not appear in the same style as that of the FormField.
+            <div>
+                <div className="gf-form">
+                    <Label>HTTP Method</Label>
+                    <Select
+                        options={method_options}
+                        value={http_method}
+                        width={15}
+                        onChange={v => {
+                            this.onMethodChange(v);
+                        }}
+                    />
+                    {this.generateSelectBox()}
 
-                {this.generateSelectBox()}
-
-            </div>
-                     { this.state.route_options.current_route.includes('devices')?
-                    <div style={{whiteSpace: 'pre-wrap'}}>
-                        <input type="text" ref="myInput" />
-                         <input
-                          type="button"
-                          value="Enter Topic segments"
-                          height={48}
-                          onClick={this.handleClick}
-                         />
-                        <input type="checkbox" ref="myInput" />
-                        <label>read-all</label>
-                    </div>: ''
-                }
-            </div>
-        );
+                </div>
+                 { this.state.route_options.current_route.includes('devices')?
+                <div style={{whiteSpace: 'pre-wrap'}}>
+                    <input type="text" ref="myInput" />
+                     <input
+                      type="button"
+                      value="Enter Topic segments"
+                      height={48}
+                      onClick={this.handleClick}
+                     />
+                    <input type="checkbox" ref="myInput" />
+                    <label>read-all</label>
+                </div>: ''
+            }
+        </div>
+    );
     }
 }
