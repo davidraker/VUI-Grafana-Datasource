@@ -332,6 +332,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
             query.route = query.route + '&end=' + options.range.to?.format();
             query.route = query.route + '&count=' + options.maxDataPoints;
             query.route = query.route + '&order=' + 'FIRST_TO_LAST';
+            if (query.query_params) {
+              query.route = query.route + '&' + query.query_params;
+            }
             const response = this.doRequest(query, 'http');
             const routes_observable = this.process_route_options(query, options, response);
             return routes_observable.pipe(merge(this.process_historian_ts(query, options, response)));
