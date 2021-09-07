@@ -2,7 +2,7 @@ import defaults from 'lodash/defaults';
 
 import React, { /*ChangeEvent,*/ PureComponent } from 'react';
 import { /*LegacyForms,*/ Select, Label } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, DataQueryRequest } from '@grafana/data';
 import { DataSource } from './datasource';
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
 import { cloneDeep } from 'lodash';
@@ -10,14 +10,26 @@ import { cloneDeep } from 'lodash';
 
 //const { FormField } = LegacyForms;
 
-type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
-
 type MyState = { route_options: any };
+
+// @ts-ignore
+type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions, MyState>;
+
+// type MyState = { route_options: any };
 
 export class QueryEditor extends PureComponent<Props, MyState> {
   constructor(props: Props) {
     super(props);
     this.props.datasource.register_query_routes_callback(this.update_query_routes);
+    let segments = this.props.query.route?.split('/');
+
+    if (segments) {
+      if (segments[0] === '') {
+        segments.shift();
+      }
+    } else {
+      segments = [];
+    }
     this.props.onRunQuery();
     this.state = {
       route_options: {
@@ -28,6 +40,23 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         },
       },
     };
+    let uri_segment = '';
+    this.state.route_options.current_route = segments;
+    let datasrc = this.props.datasource;
+
+    segments.forEach((seg: any, indx: any) => {
+      let q = {
+        refId: this.props.datasource.id.toString(),
+        http_method: 'GET',
+        route: uri_segment,
+      } as MyQuery;
+      let request = {} as DataQueryRequest;
+      request.targets = [q];
+      let response = datasrc.query(request);
+      uri_segment = uri_segment + '/' + seg;
+      console.log('RESPONSE');
+      console.log(response);
+    });
   }
 
   onRouteChange = (segment: SelectableValue<string>, index: any) => {
@@ -74,41 +103,52 @@ export class QueryEditor extends PureComponent<Props, MyState> {
   };
 
   update_query_routes = (route_options: any, segment_number: number) => {
-    const new_route_opts = cloneDeep(this.state.route_options);
     console.log('route options callback is set, and received: ');
     console.log(route_options);
     console.log('STATE route options is:" ');
-    console.log(new_route_opts);
-    console.log('new_key from callback', segment_number);
-    new_route_opts.segments[segment_number /*new_key*/] = Object.keys(route_options);
-    this.setState({ route_options: new_route_opts });
+    console.log(this.state.route_options);
+    //const new_key = this.state.route_options.current_route.length.toString(10);
+    console.log('new_key from callback', segment_number /*new_key, this.state.route_options.current_route.length*/);
+    //if (this.state.route_options.current_route.length == segment_number /*parseInt(new_key)*/){
+    this.state.route_options.segments[segment_number /*new_key*/] = Object.keys(route_options);
     console.log('this.state.route_options.segments:', this.state.route_options.segments);
     console.log('this.state.route_options.current_route', this.state.route_options.current_route);
-    //this.forceUpdate();
-    //this.setState({route_options.segments[new_key]: Object(route_options).keys()});
+    this.forceUpdate();
   };
 
   generateSelectBox = () => {
     return Object.keys(this.state.route_options.segments).map((index: string) => {
       const route_options = this.state.route_options.segments[index];
+      // this.state.route_options.current_route
       console.log('index');
       console.log(index);
       console.log('route_options from generate box');
       console.log(route_options);
       return (
         <Select
-          key={index}
           options={route_options.map((x: string) => {
             return { label: x, value: x };
           })}
           value={this.state.route_options.current_route[parseInt(index, 10)]}
           width={15}
-          onChange={(v) => {
+          onChange={v => {
             this.onRouteChange(v, index);
           }}
         />
       );
     });
+  };
+  handleClick = (refs: any) => {
+    alert('button clicked');
+    //let tag = 'tag';
+    //let regex = '';
+    this.props.query.query_params = 'tag=foo&regex=null';
+    console.log(this.props.query.query_params);
+    // query.query_params = 'tag=foo&regex=null&read-all=true&count=6'
+    //p = parse_params(query.query_params)
+    //p is now {"tag": "foo", "regex": null, read-all: true}
+    //update p with url_encode(things passed by button click)
+    // query.query_params = write_params(p)
   };
 
   render() {
@@ -123,18 +163,32 @@ export class QueryEditor extends PureComponent<Props, MyState> {
 
     return (
       // TODO: Label does not appear in the same style as that of the FormField.
-      <div className="gf-form">
-        <Label>HTTP Method</Label>
-        <Select
-          options={method_options}
-          value={http_method}
-          width={15}
-          onChange={(v) => {
-            this.onMethodChange(v);
-          }}
-        />
-
-        {this.generateSelectBox()}
+      <div>
+        <div className="gf-form">
+          <Label>HTTP Method</Label>
+          <Select
+            options={method_options}
+            value={http_method}
+            width={15}
+            onChange={v => {
+              this.onMethodChange(v);
+            }}
+          />
+          {this.generateSelectBox()}
+        </div>
+        {this.state.route_options.current_route.includes('devices') ? (
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <label>Tag</label>
+            <input type="text" name="tag" />
+            <label>Regex</label>
+            <input type="text" name="regex" />
+            <input type="checkbox" ref="readall" />
+            <label>read-all</label>
+            <input type="button" value="Submit" height={48} onClick={this.handleClick} />
+          </div>
+        ) : (
+          ''
+        )}
       </div>
     );
   }
