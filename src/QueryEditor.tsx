@@ -138,12 +138,39 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       );
     });
   };
+
+  parseParams = (querystring: string) => {
+    const params = new URLSearchParams(querystring);
+    const obj: any = {};
+    // @ts-ignore
+    for (const key of params.keys()) {
+      if (params.getAll(key).length > 1) {
+        obj[key] = params.getAll(key);
+      } else {
+        obj[key] = params.get(key);
+      }
+    }
+    return obj;
+  };
+
+  // convertObjectToString = (paramObject: object) => {
+  //   if (Object.keys(paramObject).length > 0) {
+  //     return Object.keys(paramObject)
+  //       .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(paramObject[key])}`)
+  //       .join('&');
+  //   } else {
+  //     return '';
+  //   }
+  // };
+
   handleClick = (refs: any) => {
     alert('button clicked');
     //let tag = 'tag';
     //let regex = '';
     this.props.query.query_params = 'tag=foo&regex=null';
-    console.log(this.props.query.query_params);
+    console.log(this.parseParams(this.props.query.query_params));
+    // console.log(this.convertObjectToString(this.parseParams(this.props.query.query_params)));
+
     // query.query_params = 'tag=foo&regex=null&read-all=true&count=6'
     //p = parse_params(query.query_params)
     //p is now {"tag": "foo", "regex": null, read-all: true}
@@ -176,7 +203,9 @@ export class QueryEditor extends PureComponent<Props, MyState> {
           />
           {this.generateSelectBox()}
         </div>
-        {this.state.route_options.current_route.includes('devices') ? (
+        {
+          this.state.route_options.current_route.includes('devices') ||
+          this.state.route_options.current_route.includes('historians') ? (
           <div style={{ whiteSpace: 'pre-wrap' }}>
             <label>Tag</label>
             <input type="text" name="tag" />
@@ -189,6 +218,29 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         ) : (
           ''
         )}
+        {this.state.route_options.current_route.includes('agents') ? (
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <label>Running</label>
+            <input type="radio" name="running" value="running" />
+            <label>Installed</label>
+            <input type="radio" name="installed" value="installed" />
+            <label>Packaged</label>
+            <input type="radio" name="packaged" value="packaged" />
+            <input type="button" value="Submit" height={48} onClick={this.handleClick} />
+          </div>
+        ) : (
+          ''
+        )}
+        {this.state.route_options.current_route.includes('pubsub') ? (
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <label>Topic</label>
+            <input type="input" name="topic" value="topic" />
+            <input type="button" value="Submit" height={48} onClick={this.handleClick} />
+          </div>
+        ) : (
+          ''
+        )}
+
       </div>
     );
   }
