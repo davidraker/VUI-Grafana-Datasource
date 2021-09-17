@@ -5,15 +5,14 @@ import { /*LegacyForms,*/ Select, Label } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, DataQueryRequest } from '@grafana/data';
 import { DataSource } from './datasource';
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
-import { cloneDeep } from 'lodash';
+import {cloneDeep, forOwn} from 'lodash';
 //import { parse } from '@grafana/data/datetime/datemath';
 
 //const { FormField } = LegacyForms;
 
 type MyState = { route_options: any };
 
-// @ts-ignore
-type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions, MyState>;
+type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 // type MyState = { route_options: any };
 
@@ -41,7 +40,15 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       },
     };
     let uri_segment = '';
-    this.state.route_options.current_route = segments;
+
+
+    // this.setState({...this.state, route_options.current_route: segments})
+
+
+    let state_copy = cloneDeep(this.state)
+    state_copy.route_options.current_route = segments;
+    this.setState(state_copy)
+
     let datasrc = this.props.datasource;
 
     segments.forEach((seg: any, indx: any) => {
@@ -110,7 +117,12 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     //const new_key = this.state.route_options.current_route.length.toString(10);
     console.log('new_key from callback', segment_number /*new_key, this.state.route_options.current_route.length*/);
     //if (this.state.route_options.current_route.length == segment_number /*parseInt(new_key)*/){
-    this.state.route_options.segments[segment_number /*new_key*/] = Object.keys(route_options);
+    // this.state.route_options.segments[segment_number /*new_key*/] = Object.keys(route_options);
+
+    let state_copy = cloneDeep(this.state);
+    state_copy.route_options.segments[segment_number /*new_key*/] = Object.keys(route_options);
+    this.setState(state_copy);
+
     console.log('this.state.route_options.segments:', this.state.route_options.segments);
     console.log('this.state.route_options.current_route', this.state.route_options.current_route);
     this.forceUpdate();
@@ -125,7 +137,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       console.log('route_options from generate box');
       console.log(route_options);
       return (
-        <Select
+        <Select key={index}
           options={route_options.map((x: string) => {
             return { label: x, value: x };
           })}
@@ -153,24 +165,35 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     return obj;
   };
 
-  // convertObjectToString = (paramObject: object) => {
-  //   if (Object.keys(paramObject).length > 0) {
-  //     return Object.keys(paramObject)
-  //       .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(paramObject[key])}`)
-  //       .join('&');
-  //   } else {
-  //     return '';
-  //   }
-  // };
+  convertObjectToString = (paramObject: object) => {
+    if (Object.keys(paramObject).length > 0) {
+      return Object.entries(paramObject)
+        .map(([key, val]) => {
+          return `${encodeURIComponent(key)}=${encodeURIComponent(val)}`;
+        })
+        .join('&');
+    } else {
+      return '';
+    }
+  };
+
 
   handleClick = (refs: any) => {
     alert('button clicked');
     //let tag = 'tag';
     //let regex = '';
     this.props.query.query_params = 'tag=foo&regex=null';
-    console.log(this.parseParams(this.props.query.query_params));
-    // console.log(this.convertObjectToString(this.parseParams(this.props.query.query_params)));
 
+    // let tag_update = "foo"
+    // let regex_update = "reg"
+
+    // name, age = {...objext, name, age}
+    // {tag, regex} = this.parseParams(this.props.query.query_params)
+    // tag = tag_update
+
+    // console.log(this.parseParams(this.props.query.query_params));
+
+    // console.log(this.convertObjectToString(this.parseParams(this.props.query.query_params)));
     // query.query_params = 'tag=foo&regex=null&read-all=true&count=6'
     //p = parse_params(query.query_params)
     //p is now {"tag": "foo", "regex": null, read-all: true}
@@ -203,15 +226,14 @@ export class QueryEditor extends PureComponent<Props, MyState> {
           />
           {this.generateSelectBox()}
         </div>
-        {
-          this.state.route_options.current_route.includes('devices') ||
-          this.state.route_options.current_route.includes('historians') ? (
+        {this.state.route_options.current_route.includes('devices') ||
+        this.state.route_options.current_route.includes('historians') ? (
           <div style={{ whiteSpace: 'pre-wrap' }}>
             <label>Tag</label>
             <input type="text" name="tag" />
             <label>Regex</label>
             <input type="text" name="regex" />
-            <input type="checkbox" ref="readall" />
+            <input type="checkbox" name="readall" />
             <label>read-all</label>
             <input type="button" value="Submit" height={48} onClick={this.handleClick} />
           </div>
@@ -240,7 +262,6 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         ) : (
           ''
         )}
-
       </div>
     );
   }
