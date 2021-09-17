@@ -182,7 +182,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     alert('button clicked');
     //let tag = 'tag';
     //let regex = '';
-    this.props.query.query_params = 'tag=foo&regex=null';
+    this.props.query.query_params = 'tag=null&regex=null';
 
     // let tag_update = "foo"
     // let regex_update = "reg"
