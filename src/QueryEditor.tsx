@@ -5,7 +5,7 @@ import { /*LegacyForms,*/ Select, Label } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, DataQueryRequest } from '@grafana/data';
 import { DataSource } from './datasource';
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
-import {cloneDeep, forOwn} from 'lodash';
+import {cloneDeep} from 'lodash';
 //import { parse } from '@grafana/data/datetime/datemath';
 
 //const { FormField } = LegacyForms;
