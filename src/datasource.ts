@@ -54,7 +54,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   alert_on_error(response: Observable<FetchResponse>) {
-    response.pipe(filter(x => !isEmpty(x.data.error))).subscribe({
+    response.pipe(filter((x) => !isEmpty(x.data.error))).subscribe({
       next(x: any) {
         console.log('VUI ERROR: ', x.data.error);
         alert(x.data.error);
@@ -72,7 +72,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     options: DataQueryRequest,
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
-    response.pipe(filter(x => !isEmpty(x.data.route_options))).subscribe(this.route_update_callback(query.route));
+    response.pipe(filter((x) => !isEmpty(x.data.route_options))).subscribe(this.route_update_callback(query.route));
     return this._empty_data_frame_observable(query);
   }
 
@@ -82,12 +82,12 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
     console.log('IN PROCESS_GENERIC');
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new MutableDataFrame({
         refId: query.refId,
         fields: [{ name: 'Response Value', type: FieldType.string }],
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
           frame.add({ 'Response Value': JSON.stringify(x.data) });
           subscriber.next({
@@ -152,22 +152,18 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
     console.log('IN PROCESS_HISTORIAN_TS');
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new CircularDataFrame({
         append: 'tail',
         capacity: options.maxDataPoints,
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
           const entries: any = Object.entries(x.data);
           if (frame.fields.length === 0) {
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
-            const field_name =
-              entries[0][0]
-                .split('/')
-                .slice(-1)
-                .pop() || '';
+            const field_name = entries[0][0].split('/').slice(-1).pop() || '';
             const first_value = entries[0][1].value[0][1];
             frame.addField({
               name: field_name,
@@ -176,11 +172,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           }
           for (const topic in x.data) {
             if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
-              const field_name =
-                topic
-                  .split('/')
-                  .slice(-1)
-                  .pop() || '';
+              const field_name = topic.split('/').slice(-1).pop() || '';
               for (const row in x.data[topic]['value']) {
                 frame.add({
                   Time: x.data[topic]['value'][row][0],
@@ -210,12 +202,12 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
     console.log('IN PROCESS_DEVICE_TS');
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new CircularDataFrame({
         append: 'tail',
         capacity: 1,
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
           const entries: any = Object.entries(x.data);
           console.log('entries is: ');
@@ -223,11 +215,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           if (frame.fields.length === 0) {
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
-            const field_name =
-              entries[0][0]
-                .split('/')
-                .slice(-1)
-                .pop() || '';
+            const field_name = entries[0][0].split('/').slice(-1).pop() || '';
             const first_value = entries[0][1].value;
             frame.addField({
               name: field_name,
@@ -236,11 +224,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           }
           for (const topic in x.data) {
             if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
-              const field_name =
-                topic
-                  .split('/')
-                  .slice(-1)
-                  .pop() || '';
+              const field_name = topic.split('/').slice(-1).pop() || '';
               frame.add({
                 Time: Date.now(),
                 [field_name]: x.data[topic]['value'],
@@ -270,13 +254,13 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     response: Observable<FetchResponse>
   ): Observable<DataQueryResponse> {
     console.log('IN PROCESS_PUBSUB_TS');
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       console.log('IN RETURN NEW OBSERVABLE');
       const frame = new CircularDataFrame({
         append: 'tail',
         capacity: 10,
       });
-      response.pipe(filter(x => isEmpty(x.data.route_options))).subscribe({
+      response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
           console.log('In process_pubsub_ts, next(x) is: ');
           console.log(x);
@@ -293,11 +277,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           }
           for (const topic in x.data) {
             if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
-              const field_name =
-                topic
-                  .split('/')
-                  .slice(-1)
-                  .pop() || '';
+              const field_name = topic.split('/').slice(-1).pop() || '';
               frame.add({
                 Time: Date.now(),
                 [field_name]: x.data[topic]['value'],
@@ -331,7 +311,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   query(options: DataQueryRequest<MyQuery>): any /*Observable<DataQueryResponse>*/ {
-    const observables = options.targets.map(target => {
+    const observables = options.targets.map((target) => {
       //let return_list: Observable<DataQueryResponse>[] = [];
       const query = defaults(target, defaultQuery);
 
@@ -348,13 +328,15 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           // this.alert_on_error(response);
           // this.log_all_nexts(response);
           if (query.route?.match(/^\/platforms\/.+\/historians\/.+\/topics\/.+\/?$/)) {
-            query.route = query.route + '?start=' + options.range.from?.format();
-            query.route = query.route + '&end=' + options.range.to?.format();
-            query.route = query.route + '&count=' + options.maxDataPoints;
-            query.route = query.route + '&order=' + 'FIRST_TO_LAST';
-            query.route = query.route + query.query_params;
-            if (query.query_params) {
+            if (options.range) {
+              query.route = query.route + '?start=' + options.range.from?.format();
+              query.route = query.route + '&end=' + options.range.to?.format();
+              query.route = query.route + '&count=' + options.maxDataPoints;
+              query.route = query.route + '&order=' + 'FIRST_TO_LAST';
               query.route = query.route + '&' + query.query_params;
+              if (query.query_params) {
+                query.route = query.route + '&' + query.query_params;
+              }
             }
             const response = this.doRequest(query, 'http');
             const routes_observable = this.process_route_options(query, options, response);
@@ -385,7 +367,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   _empty_data_frame_observable(query: MyQuery) {
-    return new Observable<DataQueryResponse>(subscriber => {
+    return new Observable<DataQueryResponse>((subscriber) => {
       const frame = new MutableDataFrame({
         refId: query.refId,
         fields: [{ name: ' ', type: FieldType.other }],

@@ -5,7 +5,7 @@ import { /*LegacyForms,*/ Select, Label } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, DataQueryRequest } from '@grafana/data';
 import { DataSource } from './datasource';
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
-import {cloneDeep} from 'lodash';
+import { cloneDeep } from 'lodash';
 //import { parse } from '@grafana/data/datetime/datemath';
 
 //const { FormField } = LegacyForms;
@@ -41,17 +41,15 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     };
     let uri_segment = '';
 
-
     // this.setState({...this.state, route_options.current_route: segments})
 
-
-    let state_copy = cloneDeep(this.state)
+    let state_copy = cloneDeep(this.state);
     state_copy.route_options.current_route = segments;
-    this.setState(state_copy)
+    this.setState(state_copy);
 
     let datasrc = this.props.datasource;
-
     segments.forEach((seg: any, indx: any) => {
+      console.log('THIS SEGMENT IS: ' + seg);
       let q = {
         refId: this.props.datasource.id.toString(),
         http_method: 'GET',
@@ -59,8 +57,13 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       } as MyQuery;
       let request = {} as DataQueryRequest;
       request.targets = [q];
+      console.log('REQUEST IS: ');
+      console.log(request);
       let response = datasrc.query(request);
+      console.log('RESPONSE IS: ');
+      console.log(response);
       uri_segment = uri_segment + '/' + seg;
+
       console.log('RESPONSE');
       console.log(response);
     });
@@ -137,13 +140,14 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       console.log('route_options from generate box');
       console.log(route_options);
       return (
-        <Select key={index}
+        <Select
+          key={index}
           options={route_options.map((x: string) => {
             return { label: x, value: x };
           })}
           value={this.state.route_options.current_route[parseInt(index, 10)]}
           width={15}
-          onChange={v => {
+          onChange={(v) => {
             this.onRouteChange(v, index);
           }}
         />
@@ -177,12 +181,11 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     }
   };
 
-
   handleClick = (refs: any) => {
     alert('button clicked');
     //let tag = 'tag';
     //let regex = '';
-    this.props.query.query_params = 'tag=null&regex=null';
+    //this.props.query.query_params = 'tag=null&regex=null';
 
     // let tag_update = "foo"
     // let regex_update = "reg"
@@ -220,7 +223,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
             options={method_options}
             value={http_method}
             width={15}
-            onChange={v => {
+            onChange={(v) => {
               this.onMethodChange(v);
             }}
           />
