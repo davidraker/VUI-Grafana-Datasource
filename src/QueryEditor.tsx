@@ -30,16 +30,18 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       segments = [];
     }
     this.props.onRunQuery();
+    console.log('at start in constructor, state has:');
+    console.log(this.state);
     this.state = {
       devices: {
         tag: '',
         regex: '',
-        read_all: true,
+        read_all: false,
       },
       historian: {
         tag: '',
         regex: '',
-        read_all: true,
+        read_all: false,
         write_all: false,
       },
       pubs: {
@@ -51,39 +53,28 @@ export class QueryEditor extends PureComponent<Props, MyState> {
         installed: false,
       },
       route_options: {
-        current_route: [],
+        current_route: segments,
         segments: {
           // '0': ['platforms', 'devices', 'pubsub'],
-          // '1': ['suba'],
+          // '1': ['platform_name1'],
         },
       },
     };
-    let uri_segment = '';
-
-    // this.setState({...this.state, route_options.current_route: segments})
-    let state_copy = cloneDeep(this.state);
-    state_copy.route_options.current_route = segments;
-    this.setState(state_copy);
 
     let datasrc = this.props.datasource;
+    let q = {
+      refId: this.props.datasource.id.toString(),
+      http_method: 'GET',
+      route: '',
+    } as MyQuery;
+    let request = {} as DataQueryRequest;
+    request.targets = [q];
+    datasrc.query(request);
     segments.forEach((seg: any, indx: any) => {
-      console.log('THIS SEGMENT IS: ' + seg);
-      let q = {
-        refId: this.props.datasource.id.toString(),
-        http_method: 'GET',
-        route: uri_segment,
-      } as MyQuery;
       let request = {} as DataQueryRequest;
       request.targets = [q];
-      console.log('REQUEST IS: ');
-      console.log(request);
-      let response = datasrc.query(request);
-      console.log('RESPONSE IS: ');
-      console.log(response);
-      uri_segment = uri_segment + '/' + seg;
-
-      console.log('RESPONSE');
-      console.log(response);
+      q.route = q.route + '/' + seg;
+      datasrc.query(request);
     });
   }
 
@@ -100,7 +91,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     } else if (index === new_route_opts.current_route.length) {
       console.log('index = new_route_opts.current_route.length');
       new_route_opts.current_route.push(segment.value);
-      console.log('this.sstate.route_options.current_lenth is: ', new_route_opts.current_route);
+      console.log('this.state.route_options.current_length is: ', new_route_opts.current_route);
     }
     Object.keys(new_route_opts.segments).forEach((key: string) => {
       if (parseInt(key, 10) > index && new_route_opts.segments[key]) {
@@ -157,6 +148,8 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       console.log(index);
       console.log('route_options from generate box');
       console.log(route_options);
+      console.log('state has: ');
+      console.log(this.state);
       return (
         <Select
           key={index}
@@ -165,7 +158,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
           })}
           value={this.state.route_options.current_route[parseInt(index, 10)]}
           width={15}
-          onChange={v => {
+          onChange={(v) => {
             this.onRouteChange(v, index);
           }}
         />
@@ -231,52 +224,227 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     // console.log(this.state.historian);
   };
 
-  handleClick = (event: any) => {
+  update_query_params = (event: any) => {
     let historian_query_parameters = this.state.historian;
     let current_route = this.state.route_options.current_route;
     if (current_route.includes('historians')) {
-      this.props.query.query_params = encodeURIComponent(
+      this.props.query.query_params =
         'tag=' +
-          historian_query_parameters.tag +
-          '&regex=' +
-          historian_query_parameters.regex +
-          '&' +
-          'read-all=' +
-          historian_query_parameters.read_all +
-          '&' +
-          'write-all=' +
-          historian_query_parameters.write_all
-      );
+        encodeURIComponent(historian_query_parameters.tag) +
+        '&regex=' +
+        encodeURIComponent(historian_query_parameters.regex) +
+        '&' +
+        'read-all=' +
+        encodeURIComponent(historian_query_parameters.read_all) +
+        '&' +
+        'write-all=' +
+        encodeURIComponent(historian_query_parameters.write_all);
     }
     let devices_query_params = this.state.devices;
     if (current_route.includes('devices')) {
-      this.props.query.query_params = encodeURIComponent(
+      this.props.query.query_params =
         'tag=' +
-          devices_query_params.tag +
-          '&regex=' +
-          devices_query_params.regex +
-          '&read-all=' +
-          devices_query_params.read_all
-      );
+        encodeURIComponent(devices_query_params.tag) +
+        '&regex=' +
+        encodeURIComponent(devices_query_params.regex) +
+        '&read-all=' +
+        encodeURIComponent(devices_query_params.read_all);
     }
     let agents_query_params = this.state.agents;
     if (current_route.includes('agents')) {
-      this.props.query.query_params = encodeURIComponent(
+      this.props.query.query_params =
         'running=' +
-          agents_query_params.running +
-          '&packaged=' +
-          agents_query_params.packaged +
-          '&installed=' +
-          agents_query_params.installed
-      );
+        encodeURIComponent(agents_query_params.running) +
+        '&packaged=' +
+        encodeURIComponent(agents_query_params.packaged) +
+        '&installed=' +
+        encodeURIComponent(agents_query_params.installed);
     }
     let pubsub_query_params = this.state.pubs;
     if (current_route.includes('pubsub')) {
-      this.props.query.query_params = encodeURIComponent('topic=' + pubsub_query_params.topic);
+      this.props.query.query_params = 'topic=' + encodeURIComponent(pubsub_query_params.topic);
     }
     console.log('HHHHHHHHHHHH');
     console.log(this.props.query.query_params);
+    this.props.onRunQuery();
   };
+
+  generate_query_parameter_elements() {
+    if (this.state.route_options.current_route.includes('historians')) {
+      return (
+        <form onSubmit={this.update_query_params}>
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <label>Tag</label>
+            <input
+              type="text"
+              name="tag"
+              value={this.state.historian.tag}
+              onChange={(v) => {
+                this.handleChange(v);
+              }}
+            />
+            {'  '}
+            <label>Regex</label>
+            <input
+              type="text"
+              name="regex"
+              value={this.state.historian.regex}
+              onChange={(v) => {
+                this.handleChange(v);
+              }}
+            />
+            {this.props.query.http_method === 'GET' && (
+              <label>
+                <input
+                  type="checkbox"
+                  name="read_all"
+                  checked={this.state.historian.read_all}
+                  onChange={(v) => {
+                    this.handleChange(v);
+                  }}
+                />
+                read-all
+              </label>
+            )}
+            {this.props.query.http_method === 'PUT' ||
+              (this.props.query.http_method === 'DELETE' && (
+                <label>
+                  <input
+                    type="checkbox"
+                    name="write_all"
+                    checked={this.state.historian.write_all}
+                    onChange={(v) => {
+                      this.handleChange(v);
+                    }}
+                  />
+                  write-all
+                </label>
+              ))}
+            {'   '}
+            <input type="button" value="Submit" height={55} onClick={this.update_query_params} />
+          </div>
+        </form>
+      );
+    } else if (this.state.route_options.current_route.includes('devices')) {
+      return (
+        <form onSubmit={this.update_query_params}>
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <label>Tag</label>
+            <input
+              type="text"
+              name="tag"
+              value={this.state.devices.tag}
+              onChange={(v) => {
+                this.handleChange(v);
+              }}
+            />
+            <label>Regex</label>
+            <input
+              type="text"
+              name="regex"
+              value={this.state.devices.regex}
+              onChange={(v) => {
+                this.handleChange(v);
+              }}
+            />
+            {this.props.query.http_method === 'GET' && (
+              <label>
+                read-all
+                <input
+                  type="checkbox"
+                  name="read_all"
+                  checked={this.state.devices.read_all}
+                  onChange={(v) => {
+                    this.handleChange(v);
+                  }}
+                />
+              </label>
+            )}
+            {this.props.query.http_method === 'PUT' ||
+              (this.props.query.http_method === 'DELETE' && (
+                <label>
+                  write-all
+                  <input
+                    type="checkbox"
+                    name="write_all"
+                    checked={this.state.devices.write_all}
+                    onChange={(v) => {
+                      this.handleChange(v);
+                    }}
+                  />
+                </label>
+              ))}
+            {'   '}
+            <input type="button" value="Submit" height={55} onClick={this.update_query_params} />
+          </div>
+        </form>
+      );
+    } else if (this.state.route_options.current_route.includes('agents')) {
+      return (
+        <form onSubmit={this.update_query_params}>
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <label>
+              <input
+                type="checkbox"
+                name="running"
+                value={this.state.agents.running}
+                onChange={(v) => {
+                  this.handleChange(v);
+                }}
+              />
+              Running
+            </label>
+            {'  '}
+            <label>
+              <input
+                type="checkbox"
+                name="installed"
+                value={this.state.agents.installed}
+                onChange={(v) => {
+                  this.handleChange(v);
+                }}
+              />
+              Installed
+            </label>
+            {'  '}
+            <label>
+              <input
+                type="checkbox"
+                name="packaged"
+                value={this.state.agents.packaged}
+                onChange={(v) => {
+                  this.handleChange(v);
+                }}
+              />
+              Packaged
+            </label>
+            {'   '}
+            <input type="button" value="Submit" height={55} onClick={this.update_query_params} />
+          </div>
+        </form>
+      );
+    } else if (this.state.route_options.current_route.includes('pubsub')) {
+      return (
+        <form onSubmit={this.update_query_params}>
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <label>Topic</label>
+            <input
+              type="input"
+              name="topic"
+              value={this.state.pubs.topic}
+              onChange={(v) => {
+                this.handleChange(v);
+              }}
+            />
+            {'   '}
+            <input type="button" value="Submit" height={55} onClick={this.update_query_params} />
+          </div>
+        </form>
+      );
+    } else {
+      return '';
+    }
+  }
 
   render() {
     const query = defaults(this.props.query, defaultQuery);
@@ -297,167 +465,13 @@ export class QueryEditor extends PureComponent<Props, MyState> {
             options={method_options}
             value={http_method}
             width={15}
-            onChange={v => {
+            onChange={(v) => {
               this.onMethodChange(v);
             }}
           />
           {this.generateSelectBox()}
         </div>
-        {this.state.route_options.current_route.includes('historians') ? (
-          <form onSubmit={this.handleClick}>
-            <div style={{ whiteSpace: 'pre-wrap' }}>
-              <label>Tag</label>
-              <input
-                type="text"
-                name="tag"
-                value={this.state.historian.tag}
-                onChange={v => {
-                  this.handleChange(v);
-                }}
-              />
-              {'  '}
-              <label>Regex</label>
-              <input
-                type="text"
-                name="regex"
-                value={this.state.historian.regex}
-                onChange={v => {
-                  this.handleChange(v);
-                }}
-              />
-              <label>
-                <input
-                  type="checkbox"
-                  name="read_all"
-                  checked={this.state.historian.read_all}
-                  onChange={v => {
-                    this.handleChange(v);
-                  }}
-                />
-                read-all
-              </label>
-              {'   '}
-              <label>
-                <input
-                  type="checkbox"
-                  name="write_all"
-                  checked={this.state.historian.write_all}
-                  onChange={v => {
-                    this.handleChange(v);
-                  }}
-                />
-                write-all
-              </label>
-              {'   '}
-              <input type="button" value="Submit" height={55} onClick={this.handleClick} />
-            </div>
-          </form>
-        ) : (
-          ''
-        )}
-        {this.state.route_options.current_route.includes('devices') ? (
-          <form onSubmit={this.handleClick}>
-            <div style={{ whiteSpace: 'pre-wrap' }}>
-              <label>Tag</label>
-              <input
-                type="text"
-                name="tag"
-                value={this.state.devices.tag}
-                onChange={v => {
-                  this.handleChange(v);
-                }}
-              />
-              <label>Regex</label>
-              <input
-                type="text"
-                name="regex"
-                value={this.state.devices.regex}
-                onChange={v => {
-                  this.handleChange(v);
-                }}
-              />
-              <label>
-                read-all
-                <input
-                  type="checkbox"
-                  name="read_all"
-                  checked={this.state.devices.read_all}
-                  onChange={v => {
-                    this.handleChange(v);
-                  }}
-                />
-              </label>
-              {'   '}
-              <input type="button" value="Submit" height={55} onClick={this.handleClick} />
-            </div>
-          </form>
-        ) : (
-          ''
-        )}
-        {this.state.route_options.current_route.includes('agents') ? (
-          <form onSubmit={this.handleClick}>
-            <div style={{ whiteSpace: 'pre-wrap' }}>
-              <label>
-                <input
-                  type="checkbox"
-                  name="running"
-                  value={this.state.agents.running}
-                  onChange={v => {
-                    this.handleChange(v);
-                  }}
-                />
-                Running
-              </label>
-              {'  '}
-              <label>
-                <input
-                  type="checkbox"
-                  name="installed"
-                  value={this.state.agents.installed}
-                  onChange={v => {
-                    this.handleChange(v);
-                  }}
-                />
-                Installed
-              </label>
-              {'  '}
-              <label>
-                <input
-                  type="checkbox"
-                  name="packaged"
-                  value={this.state.agents.packaged}
-                  onChange={v => {
-                    this.handleChange(v);
-                  }}
-                />
-                Packaged
-              </label>
-              {'   '}
-              <input type="button" value="Submit" height={55} onClick={this.handleClick} />
-            </div>
-          </form>
-        ) : (
-          ''
-        )}
-        {this.state.route_options.current_route.includes('pubsub') ? (
-          <form onSubmit={this.handleClick}>
-            <div style={{ whiteSpace: 'pre-wrap' }}>
-              <label>Topic</label>
-              <input
-                type="input"
-                name="topic"
-                value={this.state.pubs.topic}
-                onChange={v => {
-                  this.handleChange(v);
-                }}
-              />
-              {'   '}
-              <input type="button" value="Submit" height={55} onClick={this.handleClick} />
-            </div>
-          </form>
-        ) : (
-          ''
-        )}
+        {this.generate_query_parameter_elements()}
       </div>
     );
   }

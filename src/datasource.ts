@@ -161,14 +161,18 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         next(x) {
           const entries: any = Object.entries(x.data);
           if (frame.fields.length === 0) {
+            console.log('The entries are:');
+
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
-            const field_name = entries[0][0].split('/').slice(-1).pop() || '';
-            const first_value = entries[0][1].value[0][1];
-            frame.addField({
-              name: field_name,
-              type: guessFieldTypeFromValue(first_value),
-            });
+            for (const [topic, data] of entries) {
+              const field_name = topic.split('/').slice(-1).pop() || '';
+              const first_value = data.value[0][1];
+              frame.addField({
+                name: field_name,
+                type: guessFieldTypeFromValue(first_value),
+              });
+            }
           }
           for (const topic in x.data) {
             if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
@@ -333,7 +337,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
               query.route = query.route + '&end=' + options.range.to?.format();
               query.route = query.route + '&count=' + options.maxDataPoints;
               query.route = query.route + '&order=' + 'FIRST_TO_LAST';
-              query.route = query.route + '&' + query.query_params;
+              // query.route = query.route + '&' + query.query_params;
               if (query.query_params) {
                 query.route = query.route + '&' + query.query_params;
               }
