@@ -29,28 +29,33 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     } else {
       segments = [];
     }
+    console.log('at start, in constructor, segments has: ');
+    console.log(segments);
     this.props.onRunQuery();
-    console.log('at start in constructor, state has:');
-    console.log(this.state);
+
+    let q_param_entries = this.props.query.query_params?.split('&').map((p) => p.split('='));
+    let q_params = q_param_entries ? Object.fromEntries(q_param_entries) : {};
+    console.log('q_params is: ');
+    console.log(q_params);
     this.state = {
       devices: {
-        tag: '',
-        regex: '',
-        read_all: false,
+        tag: q_params.tag || '',
+        regex: q_params.regex || '',
+        read_all: q_params['read-all'] === 'true',
       },
       historian: {
-        tag: '',
-        regex: '',
-        read_all: false,
-        write_all: false,
+        tag: q_params.tag || '',
+        regex: q_params.regex || '',
+        read_all: q_params['read-all'] === 'true',
+        write_all: q_params['write-all'] === 'true',
       },
       pubs: {
-        topic: '',
+        topic: q_params.topic || '',
       },
       agents: {
-        running: false,
-        packaged: false,
-        installed: false,
+        running: q_params.running === 'true',
+        packaged: q_params.packaged === 'true',
+        installed: q_params.installed === 'true',
       },
       route_options: {
         current_route: segments,
@@ -73,45 +78,29 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     segments.forEach((seg: any, indx: any) => {
       let request = {} as DataQueryRequest;
       request.targets = [q];
-      q.route = q.route + '/' + seg;
+      q.route = q.route?.split('?')[0] + '/' + seg;
       datasrc.query(request);
     });
   }
 
   onRouteChange = (segment: SelectableValue<string>, index: any) => {
     index = parseInt(index, 10);
-    console.log('onRouteChange index is:', index);
-    console.log('onRouteChange segment is: ', segment);
     const { onChange, query, onRunQuery } = this.props;
     let new_route_opts = cloneDeep(this.state.route_options);
     if (index < new_route_opts.current_route.length) {
-      console.log('index < new_route_opts.current_route.length');
       new_route_opts.current_route = new_route_opts.current_route.slice(0, index);
       new_route_opts.current_route.push(segment.value);
     } else if (index === new_route_opts.current_route.length) {
-      console.log('index = new_route_opts.current_route.length');
       new_route_opts.current_route.push(segment.value);
-      console.log('this.state.route_options.current_length is: ', new_route_opts.current_route);
     }
     Object.keys(new_route_opts.segments).forEach((key: string) => {
       if (parseInt(key, 10) > index && new_route_opts.segments[key]) {
-        console.log('after deletion');
         delete new_route_opts.segments[key];
-        console.log(new_route_opts.segments);
       }
     });
-    console.log('current_route is: ', new_route_opts.current_route);
-    console.log('route will be :', '/' + new_route_opts.current_route.join('/'));
     onChange({ ...query, route: '/' + new_route_opts.current_route.join('/') });
-    console.log('after onChange');
     onRunQuery();
-    console.log('after onRunQuery');
     this.setState({ route_options: new_route_opts });
-    console.log('after setState');
-    console.log('new_route_opts is: ');
-    console.log(new_route_opts);
-    console.log('state.route_options is: ');
-    console.log(this.state.route_options);
   };
 
   onMethodChange = (method_value: SelectableValue<string>) => {
@@ -122,34 +111,20 @@ export class QueryEditor extends PureComponent<Props, MyState> {
   };
 
   update_query_routes = (route_options: any, segment_number: number) => {
-    console.log('route options callback is set, and received: ');
-    console.log(route_options);
-    console.log('STATE route options is:" ');
-    console.log(this.state.route_options);
-    //const new_key = this.state.route_options.current_route.length.toString(10);
-    console.log('new_key from callback', segment_number /*new_key, this.state.route_options.current_route.length*/);
-    //if (this.state.route_options.current_route.length == segment_number /*parseInt(new_key)*/){
-    // this.state.route_options.segments[segment_number /*new_key*/] = Object.keys(route_options);
-
     let state_copy = cloneDeep(this.state);
     state_copy.route_options.segments[segment_number /*new_key*/] = Object.keys(route_options);
     this.setState(state_copy);
-
-    console.log('this.state.route_options.segments:', this.state.route_options.segments);
-    console.log('this.state.route_options.current_route', this.state.route_options.current_route);
     this.forceUpdate();
   };
 
   generateSelectBox = () => {
-    return Object.keys(this.state.route_options.segments).map((index: string) => {
-      const route_options = this.state.route_options.segments[index];
-      // this.state.route_options.current_route
-      console.log('index');
-      console.log(index);
-      console.log('route_options from generate box');
-      console.log(route_options);
-      console.log('state has: ');
-      console.log(this.state);
+    const segments = this.state.route_options.segments;
+    const current_route = this.state.route_options.current_route;
+    const topic_segment =
+      current_route.indexOf('topics') >= 0 ? current_route.indexOf('topics') : current_route.indexOf('devices');
+    return Object.keys(segments).map((index: string) => {
+      const route_options =
+        topic_segment >= 0 && index > topic_segment ? ['-'].concat(segments[index].sort()) : segments[index].sort();
       return (
         <Select
           key={index}
@@ -216,12 +191,6 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       }
     }
     this.setState(state_copy);
-    console.log('MY STATE');
-    console.log(this.state);
-    // console.log(event.target.value);
-    // this.setState({ historian: event.target.value });
-    // console.log('HANDLECHANGE changed state vale...');
-    // console.log(this.state.historian);
   };
 
   update_query_params = (event: any) => {
@@ -264,8 +233,6 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     if (current_route.includes('pubsub')) {
       this.props.query.query_params = 'topic=' + encodeURIComponent(pubsub_query_params.topic);
     }
-    console.log('HHHHHHHHHHHH');
-    console.log(this.props.query.query_params);
     this.props.onRunQuery();
   };
 

@@ -16,6 +16,19 @@ import { Observable } from 'rxjs';
 import { filter, merge } from 'rxjs/operators';
 import { defaults, isEmpty } from 'lodash';
 
+function first_unique_segment(entries: any[][]) {
+  const e_list = entries.map((x, i) => x[0].split('/'));
+  const zipped = Array(
+    Math.min.apply(
+      Math,
+      e_list.map((x) => x.length)
+    )
+  )
+    .fill([])
+    .map((x, i) => e_list.map((s) => s[i]));
+  return zipped.map((x) => x.every((y, i, arr) => y === arr[0])).indexOf(false);
+}
+
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   url?: string;
   path: string;
@@ -160,13 +173,13 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
           const entries: any = Object.entries(x.data);
+          //TODO: Adjust topic names once in first_unique_segment, instead of in many places here and in devices.
+          const unique_seg = first_unique_segment(entries);
           if (frame.fields.length === 0) {
-            console.log('The entries are:');
-
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
-            for (const [topic, data] of entries) {
-              const field_name = topic.split('/').slice(-1).pop() || '';
+            for (let [topic, data] of entries) {
+              const field_name = topic.split('/').slice(unique_seg).join('/') || '';
               const first_value = data.value[0][1];
               frame.addField({
                 name: field_name,
@@ -174,21 +187,20 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
               });
             }
           }
-          for (const topic in x.data) {
-            if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
-              const field_name = topic.split('/').slice(-1).pop() || '';
-              for (const row in x.data[topic]['value']) {
-                frame.add({
-                  Time: x.data[topic]['value'][row][0],
-                  [field_name]: x.data[topic]['value'][row][1],
-                });
-                subscriber.next({
-                  data: [frame],
-                  key: query.refId,
-                });
-              }
-            }
-          }
+          let ts_set = new Set();
+          //TODO: Figure out how to get rid of need for ignoring linting errors here. How to declare types?
+          // @ts-ignore
+          entries.map((x) => x[1]['value'].map(y => y[0])).flat().forEach(x => ts_set.add(x));
+          let data_map = {}
+          // @ts-ignore
+          ts_set.forEach(x => data_map[x] = Object.fromEntries([['Time', x]].concat(entries.map(x => [x[0].split('/').slice(unique_seg).join('/') || '', null]))));
+          // @ts-ignore
+          entries.map((x, i) => x[1]['value'].forEach(y => data_map[y[0]][x[0].split('/').slice(unique_seg).join('/') || ''] = y[1]))
+          Object.entries(data_map).forEach(x => frame.add(x[1]))
+          subscriber.next({
+            data: [frame],
+            key: query.refId,
+          });
         },
         error(err) {
           console.log('ERROR FROM process_historian_ts.subscribe(): ' + err);
@@ -214,33 +226,32 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       response.pipe(filter((x) => isEmpty(x.data.route_options))).subscribe({
         next(x) {
           const entries: any = Object.entries(x.data);
-          console.log('entries is: ');
-          console.log(entries);
+          const unique_seg = first_unique_segment(entries);
           if (frame.fields.length === 0) {
             frame.refId = query.refId;
             frame.addField({ name: 'Time', type: FieldType.time });
-            const field_name = entries[0][0].split('/').slice(-1).pop() || '';
-            const first_value = entries[0][1].value;
-            frame.addField({
-              name: field_name,
-              type: guessFieldTypeFromValue(first_value),
-            });
-          }
-          for (const topic in x.data) {
-            if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
-              const field_name = topic.split('/').slice(-1).pop() || '';
-              frame.add({
-                Time: Date.now(),
-                [field_name]: x.data[topic]['value'],
-              });
-              console.log('frame is: ');
-              console.log(frame);
-              subscriber.next({
-                data: [frame],
-                key: query.refId,
+            for (const [topic, data] of entries) {
+              const field_name = topic.split('/').slice(unique_seg).join('/') || '';
+              const first_value = data.value;
+              frame.addField({
+                name: field_name,
+                type: guessFieldTypeFromValue(first_value),
               });
             }
           }
+          const row: any = {};
+          row['Time'] = Date.now();
+          for (let topic in x.data) {
+            if (!['metadata', 'units', 'type', 'tz'].includes(topic)) {
+              const field_name = topic.split('/').slice(unique_seg).join('/') || '';
+              row[field_name] = x.data[topic]['value'];
+            }
+          }
+          frame.add(row);
+          subscriber.next({
+            data: [frame],
+            key: query.refId,
+          });
         },
         error(err) {
           console.log('ERROR FROM process_device_ts.subscribe(): ' + err);
